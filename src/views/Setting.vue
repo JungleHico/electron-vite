@@ -15,7 +15,11 @@
       </a-radio-group>
     </a-form-item>
     <a-form-item label="保存路径">
-      <a-input v-model:value="formState.savePath" readonly @click="onSelectSavePath"></a-input>
+      <a-input
+        v-model:value="formState.savePath"
+        readonly
+        @click="onSelectSavePath">
+      </a-input>
     </a-form-item>
     <a-form-item
       label="截图快捷键"
@@ -47,18 +51,11 @@
   </a-form>
 </template>
 
-<script lang="ts">
-export default {
-  name: 'Setting'
-}
-</script>
-
 <script setup lang="ts">
-import { keyCodeList1, keyCodeList2 } from '../utils/keyCode'
-// import { RuleObject } from 'ant-design-vue/es/form/interface'
+import { keyCodeList1, keyCodeList2 } from '../utils/keyCodeList'
 
 interface FormState {
-  closeAction: string,
+  closeAction: '' | 'quit' | 'tray',
   savePath: string,
   screenshotKey1: string,
   screenshotKey2: string
@@ -71,10 +68,10 @@ interface RadioOption {
 // 表单
 const formRef = ref()
 const formState = reactive<FormState>({
-  closeAction: '',
-  savePath: '',
-  screenshotKey1: '',
-  screenshotKey2: ''
+  closeAction: '',      // 关闭窗口
+  savePath: '',         // 保存路径
+  screenshotKey1: '',   // 截图快捷键1
+  screenshotKey2: ''    // 截图快捷键2
 })
 
 // 关闭窗口
@@ -83,23 +80,24 @@ const closeOptions = reactive<RadioOption[]>([
   { label: '最小化到托盘', value: 'tray' }
 ])
 // @ts-ignore
-window.deskCapturer.getCloseAction().then(res => {
+window.desktopCapturer.getCloseAction().then((res: FormState.closeAction) => {
   // 从主进程中获取本地缓存值
   formState.closeAction = res
 })
 const onChangeCloseAction = () => {
   // @ts-ignore
-  window.deskCapturer.setCloseAction(formState.closeAction)
+  window.desktopCapturer.setCloseAction(formState.closeAction)
 }
 
 // 保存路径
 // @ts-ignore
-window.deskCapturer.getSavePath().then(res => {
+window.desktopCapturer.getSavePath().then((res: string) => {
+  // 从主进程中获取本地缓存值
   formState.savePath = res
 })
 const onSelectSavePath = () => {
   // @ts-ignore
-  window.deskCapturer.setSavePath().then(res => {
+  window.desktopCapturer.setSavePath().then((res: string) => {
     if (res) {
       formState.savePath = res
     }
@@ -108,8 +106,9 @@ const onSelectSavePath = () => {
 
 // 截图快捷键
 // @ts-ignore
-window.deskCapturer.getScreenshotShortcut()
+window.desktopCapturer.getScreenshotShortcut()
   .then((res: string) => {
+    // 从主进程中获取本地缓存值
     const keys = res.split('+')
     keys.forEach(key => {
       if (keyCodeList1.includes(key)) {
@@ -119,7 +118,7 @@ window.deskCapturer.getScreenshotShortcut()
       }
     })
   })
-// 组合快捷键
+// 快捷键组合
 const screenshotKeyCode = computed(() => {
   if (formState.screenshotKey1 === '' && formState.screenshotKey2 === '') {
     return ''
@@ -134,7 +133,7 @@ const screenshotKeyCode = computed(() => {
 })
 const validateScreenshotKey = async () => {
   // @ts-ignore
-  const result = await window.deskCapturer.setScreenshotShortcut(screenshotKeyCode.value)
+  const result = await window.desktopCapturer.setScreenshotShortcut(screenshotKeyCode.value)
   if (!result) {
     return Promise.reject('快捷键无效')
   }

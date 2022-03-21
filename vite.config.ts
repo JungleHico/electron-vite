@@ -11,13 +11,13 @@ export default defineConfig({
     // 自动导入Vue3组合式API（使用setup语法糖）
     AutoImport({
       imports: ['vue'],
-      dts: 'src/auto-imports.d.ts',
+      dts: 'src/auto-imports.d.ts'
     }),
     // 自动导入组件库
     Components({
       resolvers: [
-        AntDesignVueResolver(),
-      ],
+        AntDesignVueResolver()
+      ]
     })
   ]
 })

@@ -1,41 +1,40 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-// 对渲染进程暴露ipc通道
-contextBridge.exposeInMainWorld('deskCapturer', {
-  screenshot: () => ipcRenderer.invoke('deskCapturer:screenshot'), // 截图
-  startRecord: () => ipcRenderer.invoke('deskCapturer:startRecord'), // 开始录屏
-  stopRecord: dataView => ipcRenderer.invoke('deskCapturer:stopRecord', dataView), // 结束录屏
+contextBridge.exposeInMainWorld('desktopCapturer', {
+  screenshot: () => ipcRenderer.invoke('rendererInvoke:screenshot'), // 截图
+  startRecord: () => ipcRenderer.invoke('rendererInvoke:startRecord'), // 开始录屏
+  stopRecord: data => ipcRenderer.invoke('rendererInvoke:stopRecord', data), // 结束录屏
   // 从缓存获取关闭窗口设置
   getCloseAction: () => {
-    ipcRenderer.send('renderer:getCloseAction')
+    ipcRenderer.send('rendererSend:getCloseAction')
 
     return new Promise((resolve) => {
-      ipcRenderer.on('main:closeAction', (event, closeAction) => {
+      ipcRenderer.on('mainReplay:closeAction', (event, closeAction) => {
         resolve(closeAction)
       })
     })
   },
-  setCloseAction: closeAction => ipcRenderer.send('renderer:closeAction', closeAction), // 关闭窗口设置
+  setCloseAction: closeAction => ipcRenderer.send('rendererInvoke:setCloseAction', closeAction), // 关闭窗口设置
   // 从缓存获取保存路径
   getSavePath: () => {
-    ipcRenderer.send('renderer:getSavePath')
+    ipcRenderer.send('rendererSend:getSavePath')
 
     return new Promise((resolve) => {
-      ipcRenderer.on('main:savePath', (event, savePath) => {
+      ipcRenderer.on('mainReply:savePath', (event, savePath) => {
         resolve(savePath)
       })
     })
   },
-  setSavePath: () => ipcRenderer.invoke('deskCapturer:setSavePath'), // 保存路径设置
+  setSavePath: () => ipcRenderer.invoke('rendererInvoke:setSavePath'), // 保存路径设置
   // 从缓存获取截图快捷键
   getScreenshotShortcut: () => {
-    ipcRenderer.send('renderer:getScreenShortcut')
+    ipcRenderer.send('rendererSend:getScreenShortcut')
 
     return new Promise((resolve) => {
-      ipcRenderer.on('main:screenshotShortcut', (event, screenshotShortcut) => {
+      ipcRenderer.on('mainReply:screenshotShortcut', (event, screenshotShortcut) => {
         resolve(screenshotShortcut)
       })
     })
   },
-  setScreenshotShortcut: keyCode => ipcRenderer.invoke('deskCapturer:setScreenshotShortcut', keyCode) // 设置截图快捷键
+  setScreenshotShortcut: keyCode => ipcRenderer.invoke('rendererInvoke:setScreenshotShortcut', keyCode) // 设置截图快捷键
 })

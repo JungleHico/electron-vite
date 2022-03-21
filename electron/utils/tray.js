@@ -1,20 +1,21 @@
 const { Tray, Menu, app } = require('electron')
 const path = require('path')
-const { getGlobalInstance } = require('../classes/Global')
+const { getGlobalInstance } = require('../models/Global')
 
-const _global = getGlobalInstance()
-
-// 设置系统托盘
 function setTray() {
+  const _global = getGlobalInstance()
+
   const tray = new Tray(path.resolve(__dirname, '../assets/logo.png'))
 
+  // 鼠标滑过图标显示文字
   tray.setToolTip('Electron截图录屏')
 
+  // 右键菜单
   const menu = Menu.buildFromTemplate([
     {
       label: '退出',
       click: () => {
-        _global.quitOnClose = true
+        _global.closeAction = 'quit'
         app.quit() // 关闭应用
       }
     }
@@ -28,4 +29,6 @@ function setTray() {
   })
 }
 
-module.exports = setTray
+module.exports = {
+  setTray
+}

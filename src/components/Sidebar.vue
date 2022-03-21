@@ -28,16 +28,11 @@ import {
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 
-const selectedKeys = reactive<Array<string>>(['/screenshot'])
+const selectedKeys = reactive<string[]>(['/screenshot'])
 const router = useRouter()
 
-const onSelectItem = (e: any) => {
-  selectedKeys.pop()
-  selectedKeys.push(e.key)
-  router.push(e.key)
+const onSelectItem = ({ key }: { key: string }) => {
+  selectedKeys.splice(0, 1, key)
+  router.push(key)
 }
 </script>
-
-<style scoped>
-
-</style>

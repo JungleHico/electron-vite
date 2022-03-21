@@ -9,19 +9,12 @@
   </div>
 </template>
 
-<script lang="ts">
-export default {
-  name: 'Screenshot'
-}
-</script>
-
 <script setup lang="ts">
 import { ScissorOutlined } from '@ant-design/icons-vue'
-import 'ant-design-vue/es/notification/style/css'
 
-const onScreenshot = () => {
-  //@ts-ignore
-  window.deskCapturer.screenshot()
+const onScreenshot = async () => {
+  // @ts-ignore
+  const display = await window.desktopCapturer.screenshot()
 }
 </script>
 

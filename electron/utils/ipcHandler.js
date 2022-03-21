@@ -1,38 +1,21 @@
-// ipc实践处理
-const {
-  ipcMain,
-  screen,
-  desktopCapturer,
-  dialog,
-  globalShortcut
-} = require('electron')
-const { getGlobalInstance } = require('../classes/Global')
-const Store = require('electron-store')
-const fs = require('fs')
+const { ipcMain, screen, desktopCapturer, dialog } = require('electron')
 const { getTimeString } = require('./time')
+const fs = require('fs')
+const { getGlobalInstance } = require('../models/Global')
 
 const _global = getGlobalInstance()
-const store = new Store()
 
 module.exports = {
-  setIpcHandles: () => {
-    // 主进程响应事件
-    ipcMain.handle('deskCapturer:screenshot', () => handleScreenshot(_global.mainWindow)) // 截图
-    ipcMain.handle('deskCapturer:startRecord', handleStartRecord), // 开始录屏
-    ipcMain.handle('deskCapturer:stopRecord', (event, dataView) => handleStopRecord(dataView, _global.mainWindow)) // 结束录屏
-    ipcMain.handle('deskCapturer:setScreenshotShortcut', (event, keyCode) => handleSetScreenshotShortCut(keyCode)) // 设置截图快捷键
-
-    // 向渲染进程传递数据
-    // 传递截图快捷键
-    ipcMain.on('renderer:getScreenShortcut', event => {
-      event.reply('main:screenshotShortcut', store.get('screenshotShortcut', ''))
-    })
+  setIpcHandler: () => {
+    ipcMain.handle('rendererInvoke:screenshot', () => handleScreenshot()), // 截图
+    ipcMain.handle('rendererInvoke:startRecord', handleStartRecord), // 开始录屏
+    ipcMain.handle('rendererInvoke:stopRecord', (event, data) => handleStopRecord(data)) // 结束录屏
   },
   handleScreenshot
 }
 
 // 截图
-async function handleScreenshot(win) {
+async function handleScreenshot() {
   // 获取屏幕宽度
   const { width, height } = screen.getPrimaryDisplay().size
 
@@ -43,7 +26,7 @@ async function handleScreenshot(win) {
   })
 
   // 打开文件对话框
-  const path = await dialog.showSaveDialog(win, {
+  const path = await dialog.showSaveDialog(_global.mainWindow, {
     title: '保存截图',
     defaultPath: `${_global.savePath}/截图_${getTimeString()}`,
     filters: [
@@ -52,7 +35,7 @@ async function handleScreenshot(win) {
   })
 
   // 保存图片
-  if (path?.filePath) {
+  if (path.filePath) {
     fs.writeFile(path.filePath, sources[0].thumbnail.toPNG(), error => {
       if (error) {
         console.log(error)
@@ -72,9 +55,9 @@ async function handleStartRecord() {
 }
 
 // 结束录屏
-async function handleStopRecord(dataView, win) {
+async function handleStopRecord(data) {
   // 打开文件对话框
-  const path = await dialog.showSaveDialog(win, {
+  const path = await dialog.showSaveDialog(_global.mainWindow, {
     title: '保存截图',
     defaultPath: `${_global.savePath}/录屏_${getTimeString()}`,
     filters: [
@@ -82,29 +65,13 @@ async function handleStopRecord(dataView, win) {
     ]
   })
 
-    // 保存视频
-  if (path?.filePath) {
-    fs.writeFile(path.filePath, dataView, error => {
+  // 保存视频
+  if (path.filePath) {
+    fs.writeFile(path.filePath, data, error => {
       if (error) {
         console.log(error)
         return
       }
     })
-  }
-}
-
-function handleSetScreenshotShortCut(keyCode) {
-  try {
-    globalShortcut.register(keyCode, () => {
-      handleScreenshot(_global.mainWindow) // 快捷键执行截图
-    })
-    const oldShortcut = store.get('screenshotShortcut', '')
-    if (oldShortcut !== '') {
-      globalShortcut.unregister(oldShortcut) // 注销旧快捷键
-    }
-    store.set('screenshotShortcut', keyCode) // 缓存快捷键
-    return true
-  } catch (error) {
-    return false
   }
 }
